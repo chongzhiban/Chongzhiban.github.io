@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>宠知伴 - 宠物健康数据记录</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #FFF9E6;
+            --bg-warm: #FFF5D6;
+            --bg-card: #FEFCF3;
+            --fg: #5D4E37;
+            --fg-muted: #9C8B74;
+            --accent: #E8B84A;
+            --accent-hover: #D4A43A;
+            --border: #E8DCC8;
+            --success: #7CB342;
+            --warning: #E8A33C;
+            --danger: #D4726A;
+        }
+        
+        * {
+            font-family: 'Nunito', sans-serif;
+            box-sizing: border-box;
+        }
+        
+        h1, h2, h3, .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        body {
+            background: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+            margin: 0;
+        }
+        
+        .bg-pattern {
+            background-image: 
+                radial-gradient(ellipse at 10% 20%, rgba(232, 184, 74, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 90% 80%, rgba(232, 184, 74, 0.08) 0%, transparent 45%),
+                radial-gradient(ellipse at 50% 100%, rgba(255, 245, 214, 0.6) 0%, transparent 60%);
+        }
+        
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-warm); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-16px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            opacity: 0;
+        }
+        
+        .animate-scale-in {
+            animation: scaleIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        
+        .animate-slide-in {
+            animation: slideIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        
+        .stagger-1 { animation-delay: 0.05s; }
+        .stagger-2 { animation-delay: 0.1s; }
+        .stagger-3 { animation-delay: 0.15s; }
+        .stagger-4 { animation-delay: 0.2s; }
+        .stagger-5 { animation-delay: 0.25s; }
+        
+        @media (prefers-reduced-motion: reduce) {
+            *, ::before, ::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        .card-hover {
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 32px rgba(93, 78, 55, 0.08), 0 4px 8px rgba(93, 78, 55, 0.06);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent) 0%, #D4A43A 100%);
+            color: var(--fg);
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(232, 184, 74, 0.25);
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(232, 184, 74, 0.35);
+        }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:focus-visible {
+            outline: 3px solid var(--accent);
+            outline-offset: 2px;
+        }
+        
+        .btn-secondary {
+            background: var(--bg-warm);
+            color: var(--fg);
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-secondary:hover {
+            background: var(--accent);
+        }
+        
+        .input-field {
+            background: white;
+            border: 2px solid var(--border);
+            color: var(--fg);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+        .input-field:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(232, 184, 74, 0.15);
+        }
+        .input-field::placeholder { color: var(--fg-muted); }
+        
+        .modal-backdrop {
+            background: rgba(93, 78, 55, 0.4);
+            backdrop-filter: blur(8px);
+        }
+        
+        .timeline-dot {
+            position: relative;
+            padding-left: 28px;
+        }
+        .timeline-dot::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 4px rgba(93, 78, 55, 0.1);
+        }
+        .timeline-dot::after {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 22px;
+            width: 2px;
+            height: calc(100% - 10px);
+            background: linear-gradient(to bottom, var(--border), transparent);
+        }
+        .timeline-dot:last-child::after { display: none; }
+        
+        .tag {
+            background: var(--bg-warm);
+            color: var(--fg-muted);
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            letter-spacing: 0.02em;
+        }
+        
+        .stat-card {
+            background: linear-gradient(145deg, white 0%, var(--bg-card) 100%);
+            border: 1px solid var(--border);
+        }
+        
+        .icon-btn {
+            padding: 0.5rem;
+            border-radius: 0.75rem;
+            transition: all 0.15s ease;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--fg-muted);
+        }
+        .icon-btn:hover {
+            background: var(--bg-warm);
+            color: var(--fg);
+        }
+        .icon-btn.danger:hover {
+            background: #FEE2E2;
+            color: var(--danger);
+        }
+        
+        .empty-paw {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .record-item {
+            transition: background 0.2s ease;
+        }
+        .record-item:hover {
+            background: rgba(255, 249, 230, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-pattern">
+    <!-- 导航栏 -->
+    <nav class="sticky top-0 z-40 backdrop-blur-xl bg-[#FFF9E6]/80 border-b border-[#E8DCC8]">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+            <div class="flex items-center gap-2 sm:gap-3">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-[#E8B84A] to-[#D4A43A] flex items-center justify-center shadow-sm">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.703 1.725 1.722 3.656 1 1.261-.472 1.96-1.45 2.344-2.5M14 5.172C14 3.782 15.577 2.679 17.5 3c2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.96-1.45-2.344-2.5"/>
+                        <path d="M8 14v.5M16 14v.5M11.25 16.25h1.5L12 17l-.75-.75z"/>
+                        <path d="M4.42 11.247A13.152 13.152 0 004 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444c0-1.128-.148-2.22-.42-3.309"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold text-[#5D4E37] font-display leading-tight">宠知伴</h1>
+                    <p class="text-xs text-[#9C8B74] hidden sm:block">宠物健康数据管理</p>
+                </div>
+            </div>
+            <button onclick="openAddPetModal()" class="btn-primary px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold flex items-center gap-2 text-sm sm:text-base" aria-label="添加新宠物">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                <span class="hidden sm:inline">添加宠物</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+        <!-- Hero -->
+        <section class="text-center mb-10 sm:mb-14 animate-fade-in-up">
+            <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#5D4E37] font-display mb-3 sm:mb-4 leading-tight">
+                记录毛孩子的健康每一天
+            </h2>
+            <p class="text-base sm:text-lg text-[#9C8B74] max-w-lg mx-auto leading-relaxed">
+                轻松追踪体重变化、用药记录、疫苗接种，让爱宠健康管理简单又温馨
+            </p>
+        </section>
+
+        <!-- 统计概览 -->
+        <section id="stats-section" class="hidden mb-8 sm:mb-10 animate-fade-in-up stagger-1">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div class="stat-card rounded-2xl p-4 text-center">
+                    <p class="text-2xl sm:text-3xl font-bold text-[#5D4E37]" id="stat-pets">0</p>
+                    <p class="text-xs sm:text-sm text-[#9C8B74] mt-1">宠物数量</p>
+                </div>
+                <div class="stat-card rounded-2xl p-4 text-center">
+                    <p class="text-2xl sm:text-3xl font-bold text-[#5D4E37]" id="stat-records">0</p>
+                    <p class="text-xs sm:text-sm text-[#9C8B74] mt-1">健康记录</p>
+                </div>
+                <div class="stat-card rounded-2xl p-4 text-center">
+                    <p class="text-2xl sm:text-3xl font-bold text-[#5D4E37]" id="stat-medications">0</p>
+                    <p class="text-xs sm:text-sm text-[#9C8B74] mt-1">用药记录</p>
+                </div>
+                <div class="stat-card rounded-2xl p-4 text-center">
+                    <p class="text-2xl sm:text-3xl font-bold text-[#5D4E37]" id="stat-vaccines">0</p>
+                    <p class="text-xs sm:text-sm text-[#9C8B74] mt-1">疫苗记录</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 宠物列表 -->
+        <section class="mb-10 sm:mb-14">
+            <div class="flex items-center justify-between mb-5 sm:mb-6">
+                <h3 class="text-xl sm:text-2xl font-bold text-[#5D4E37] font-display">我的宠物</h3>
+                <span id="pet-count" class="tag text-xs sm:text-sm">0 只宠物</span>
+            </div>
+            <div id="pets-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"></div>
+            
+            <!-- 空状态 -->
+            <div id="empty-state" class="text-center py-12 sm:py-20 animate-fade-in-up">
+                <div class="empty-paw mb-6">
+                    <svg width="100" height="100" viewBox="0 0 100 100" class="mx-auto text-[#E8DCC8]">
+                        <circle cx="50" cy="50" r="45" fill="currentColor" opacity="0.4"/>
+                        <circle cx="35" cy="35" r="8" fill="#5D4E37" opacity="0.3"/>
+                        <circle cx="65" cy="35" r="8" fill="#5D4E37" opacity="0.3"/>
+                        <circle cx="28" cy="52" r="7" fill="#5D4E37" opacity="0.3"/>
+                        <circle cx="72" cy="52" r="7" fill="#5D4E37" opacity="0.3"/>
+                        <ellipse cx="50" cy="60" rx="15" ry="12" fill="#5D4E37" opacity="0.3"/>
+                    </svg>
+                </div>
+                <p class="text-[#9C8B74] text-lg mb-2">还没有添加宠物</p>
+                <p class="text-[#9C8B74] text-sm mb-6">点击下方按钮开始记录毛孩子的健康数据</p>
+                <button onclick="openAddPetModal()" class="btn-primary px-8 py-3 rounded-xl font-bold">
+                    添加第一只宠物
+                </button>
+            </div>
+        </section>
+
+        <!-- 最近记录 -->
+        <section id="recent-section" class="hidden">
+            <h3 class="text-xl sm:text-2xl font-bold text-[#5D4E37] font-display mb-5 sm:mb-6">最近记录</h3>
+            <div id="records-container" class="bg-white rounded-2xl p-5 sm:p-6 shadow-sm border border-[#E8DCC8]">
+                <div id="records-list" class="space-y-4"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="text-center py-8 border-t border-[#E8DCC8] mt-10">
+        <p class="text-sm text-[#9C8B74]">数据安全存储在您的浏览器本地</p>
+    </footer>
+
+    <!-- 添加/编辑宠物模态框 -->
+    <div id="pet-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="pet-modal-title">
+        <div class="modal-backdrop absolute inset-0" onclick="closePetModal()"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-scale-in">
+                <div class="p-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-5 sm:mb-6">
+                        <h3 id="pet-modal-title" class="text-xl sm:text-2xl font-bold text-[#5D4E37] font-display">添加新宠物</h3>
+                        <button onclick="closePetModal()" class="icon-btn" aria-label="关闭">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 6L6 18M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <form id="pet-form" class="space-y-4">
+                        <input type="hidden" id="pet-id">
+                        
+                        <div>
+                            <label for="pet-name" class="block text-sm font-semibold text-[#5D4E37] mb-1.5">宠物名字 *</label>
+                            <input type="text" id="pet-name" name="name" required maxlength="20"
+                                class="input-field w-full px-4 py-2.5 rounded-xl" placeholder="例如：小白">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="pet-type" class="block text-sm font-semibold text-[#5D4E37] mb-1.5">宠物类型 *</label>
+                                <select id="pet-type" name="type" required class="input-field w-full px-4 py-2.5 rounded-xl">
+                                    <option value="">选择类型</option>
+                                    <option value="dog">狗狗</option>
+                                    <option value="cat">猫咪</option>
+                                    <option value="rabbit">兔子</option>
+                                    <option value="hamster">仓鼠</option>
+                                    <option value="bird">鸟类</option>
+                                    <option value="fish">鱼类</option>
+                                    <option value="other">其他</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="pet-breed" class="block text-sm font-semibold text-[#5D4E37] mb-1.5">品种</label>
+                                <input type="text" id="pet-breed" name="breed" maxlength="30"
+                                    class="input-field w-full px-4 py-2.5 rounded-xl" placeholder="例如：金毛">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="pet-birth" class="block text-sm font-semibold text-[#5D4E37] mb-1.5">出生日期</label>
+                                <input type="date" id="pet-birth" name="birthDate"
+                                    class="input-field w-full px-4 py-2.5 rounded-xl">
+                            </div>
+                            <div>
+                                <label for="pet-gender" class="block text-sm font-semibold text-[#5D4E37] mb-1.5">性别</label>
+                                <select id="pet-gender" name="gender" class="input-field w-full px-4 py-2.5 rounded-xl">
+                                    <option value="">未知</option>
+                                    <option value="male">公</option>
+                                    <option value="female">母</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-3 border-t border-[#E8DCC8]">
+                            <h4 class="text-base font-bold text-[#5D4E37] mb-3">基础健康数据</h4>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label for="pet-weight" class="block text-sm font-semibold text-[#5D4E37] mb-1.5">体重</label>
+                                    <input type="number" id="pet-weight" name="weight" step="0.01" min="0" max="999"
+                                        class="input-field w-full px-4 py-2.5 rounded-xl" placeholder="kg">
+                                </div>
+                                <div>
+                                    <label for="pet-height" class="block text-sm font-semibold text-[#5D4E37] mb-1.5">身高</label>
+                                    <input type="number" id="pet-height" name="height" step="0.1" min="0" max="300"
+                                        class="input-field w-full px-4 py-2.5 rounded-xl" placeholder="cm">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary w-full py-3 rounded-xl font-bold text-base mt-2">
+                            保存宠物信息
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加健康记录模态框 -->
+    <div id="health-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="health-modal-title">
+        <div class="modal-backdrop absolute inset-0" onclick="closeHealthModal()"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-scale-in">
+                <div class="p-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-5 sm:mb-6">
+                        <h3 id="health-modal-title" class="text-xl sm:text-2xl font-bold text-[#5D4E37] font-display">添加健康记录</h3>
+                        <button onclick="closeHealthModal()" class="icon-btn" aria-label="关闭">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 6L6 18M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <form id="health-form" class="space-y-4">
+                        <input type="hidden" id="health-pet-id">
+                        
+                        <div>
+                            <label for="record-type" class="block text-sm font-semibold text-[#5D4E37] mb-1.5">记录类型 *</label>
+                            <select id="record-type" name="type" required class="input-field w-full px-4 py-2.5 rounded-xl">
+                                <option value="">选择类型</option>
+                                <option value="weight">体重记录</option>
+                                <option value="height">身高记录</option>
+                                <option value="medication">用药记录</option>
+                                <option value="vaccine">疫苗记录</option>
+                                <option value="checkup">体检记录</option>
+                                <option value="surgery">手术记录</option>
+                                <option value="other">其他记录</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="record-date" class="block text-sm font-semibold text-[#5D4E37] mb-1.5">记录日期 *</label>
+                            <input type="date" id="record-date" name="date" required
+                                class="input-field w-full px-4 py-2.5 rounded-xl">
+                        </div>
+                        
+                        <div>
+                            <label for="record-value" class="block text-sm font-semibold text-[#5D4E37] mb-1.5">记录内容 *</label>
+                            <input type="text" id="record-value" name="value" required maxlength="100"
+                                class="input-field w-full px-4 py-2.5 rounded-xl" placeholder="例如：5.2kg">
+                        </div>
+                        
+                        <div>
+                            <label for="record-note" class="block text-sm font-semibold text-[#5D4E37] mb-1.5">备注说明</label>
+                            <textarea id="record-note" name="note" rows="2" maxlength="200"
+                                class="input-field w-full px-4 py-2.5 rounded-xl resize-none" placeholder="添加详细说明..."></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary w-full py-3 rounded-xl font-bold text-base">
+                            保存记录
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 宠物详情模态框 -->
+    <div id="detail-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
+        <div class="modal-backdrop absolute inset-0" onclick="closeDetailModal()"></div>
+        <div class="relative min-h-screen flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
+                <div class="p-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <h3 id="detail-modal-title" class="text-xl sm:text-2xl font-bold text-[#5D4E37] font-display">宠物详情</h3>
+                        <button onclick="closeDetailModal()" class="icon-btn" aria-label="关闭">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 6L6 18M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="detail-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 hidden">
+        <div class="bg-[#5D4E37] text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-medium">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M20 6L9 17l-5-5"/>
+            </svg>
+            <span id="toast-message">操作成功</span>
+        </div>
+    </div>
+
+    <script>
+        // 数据存储
+        var pets = [];
+        var healthRecords = [];
+        
+        // 图标配置
+        var petIcons = {
+            dog: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 5.172C10 3.782 8.423 2.679 6.5 3c-2.823.47-4.113 6.006-4 7 .08.703 1.725 1.722 3.656 1 1.261-.472 1.96-1.45 2.344-2.5M14 5.172C14 3.782 15.577 2.679 17.5 3c2.823.47 4.113 6.006 4 7-.08.703-1.725 1.722-3.656 1-1.261-.472-1.96-1.45-2.344-2.5"/><path d="M4.42 11.247A13.152 13.152 0 004 14.556C4 18.728 7.582 21 12 21s8-2.272 8-6.444c0-1.128-.148-2.22-.42-3.309"/></svg>',
+            cat: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5c.67 0 1.35.09 2 .26 1.78-2 5.03-2.84 6.42-2.26 1.4.58-.42 7-.42 7 .57 1.07 1 2.24 1 3.44C21 17.9 16.97 21 12 21s-9-3.1-9-7.56c0-1.25.5-2.4 1-3.44 0 0-1.89-6.42-.5-7 1.39-.58 4.72.23 6.5 2.23A9.04 9.04 0 0112 5z"/><path d="M8 14v.5M16 14v.5"/><path d="M11.25 16.25h1.5L12 17l-.75-.75z"/></svg>',
+            rabbit: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8.5a2.5 2.5 0 010-5A2.5 2.5 0 0120 4.5"/><path d="M6 8.5a2.5 2.5 0 000-5A2.5 2.5 0 004 4.5"/><path d="M4 10c0 4.418 3.582 8 8 8s8-3.582 8-8"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/></svg>',
+            hamster: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><path d="M9 15c1 1 2.5 1.5 3 1.5s2-.5 3-1.5"/></svg>',
+            bird: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 7h.01M3.4 18H12a8 8 0 008-8V7a4 4 0 00-7.28-2.3L2 20"/><path d="M20 7l2 2-2 2"/></svg>',
+            fish: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 12c3.5-4 8.5-4 11 0-2.5 4-7.5 4-11 0z"/><path d="M2 12l2-2v4l-2-2z"/><circle cx="14" cy="12" r="1"/></svg>',
+            other: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="9" r="1"/></svg>'
+        };
+        
+        var petTypeNames = {
+            dog: '狗狗', cat: '猫咪', rabbit: '兔子',
+            hamster: '仓鼠', bird: '鸟类', fish: '鱼类', other: '其他'
+        };
+        
+        var genderNames = { male: '公', female: '母' };
+        
+        var recordTypeNames = {
+            weight: '体重', height: '身高', medication: '用药',
+            vaccine: '疫苗', checkup: '体检', surgery: '手术', other: '其他'
+        };
+        
+        var recordColors = {
+            weight: { bg: '#E8F5E9', text: '#2E7D32' },
+            height: { bg: '#E3F2FD', text: '#1565C0' },
+            medication: { bg: '#FFF3E0', text: '#E65100' },
+            vaccine: { bg: '#F3E5F5', text: '#7B1FA2' },
+            checkup: { bg: '#E0F7FA', text: '#00838F' },
+            surgery: { bg: '#FFEBEE', text: '#C62828' },
+            other: { bg: '#FFF8E1', text: '#F57F17' }
+        };
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            renderAll();
+            setDefaultDate();
+        });
+        
+        function loadData() {
+            try {
+                var savedPets = localStorage.getItem('petHealth_pets');
+                var savedRecords = localStorage.getItem('petHealth_records');
+                pets = savedPets ? JSON.parse(savedPets) : [];
+                healthRecords = savedRecords ? JSON.parse(savedRecords) : [];
+            } catch (e) {
+                pets = [];
+                healthRecords = [];
+            }
+        }
+        
+        function saveData() {
+            localStorage.setItem('petHealth_pets', JSON.stringify(pets));
+            localStorage.setItem('petHealth_records', JSON.stringify(healthRecords));
+        }
+        
+        function setDefaultDate() {
+            var today = new Date().toISOString().split('T')[0];
+            document.getElementById('record-date').value = today;
+        }
+        
+        // 渲染函数
+        function renderAll() {
+            renderStats();
+            renderPets();
+            renderRecentRecords();
+        }
+        
+        function renderStats() {
+            var statsSection = document.getElementById('stats-section');
+            if (pets.length === 0) {
+                statsSection.classList.add('hidden');
+                return;
+            }
+            
+            statsSection.classList.remove('hidden');
+            document.getElementById('stat-pets').textContent = pets.length;
+            document.getElementById('stat-records').textContent = healthRecords.length;
+            document.getElementById('stat-medications').textContent = healthRecords.filter(function(r) { return r.type === 'medication'; }).length;
+            document.getElementById('stat-vaccines').textContent = healthRecords.filter(function(r) { return r.type === 'vaccine'; }).length;
+        }
+        
+        function renderPets() {
+            var grid = document.getElementById('pets-grid');
+            var emptyState = document.getElementById('empty-state');
+            var countEl = document.getElementById('pet-count');
+            
+            countEl.textContent = pets.length + ' 只宠物';
+            
+            if (pets.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            var html = '';
+            for (var i = 0; i < pets.length; i++) {
+                var pet = pets[i];
+                var petRecords = healthRecords.filter(function(r) { return r.petId === pet.id; });
+                var weightRecords = petRecords.filter(function(r) { return r.type === 'weight'; });
+                weightRecords.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+                var lastWeight = weightRecords[0];
+                
+                var medRecords = petRecords.filter(function(r) { return r.type === 'medication'; });
+                medRecords.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+                var lastMed = medRecords[0];
+                
+                var staggerClass = 'stagger-' + Math.min(i + 1, 5);
+                
+                html += '<article class="bg-white rounded-2xl p-5 shadow-sm border border-[#E8DCC8] card-hover animate-fade-in-up ' + staggerClass + '">';
+                html += '<div class="flex items-start justify-between mb-4">';
+                html += '<div class="flex items-center gap-3">';
+                html += '<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FFF5D6] to-[#FFE9B3] flex items-center justify-center text-[#E8B84A]">';
+                html += petIcons[pet.type] || petIcons.other;
+                html += '</div>';
+                html += '<div>';
+                html += '<h4 class="text-lg font-bold text-[#5D4E37] leading-tight">' + escapeHtml(pet.name) + '</h4>';
+                html += '<p class="text-xs text-[#9C8B74]">' + (petTypeNames[pet.type] || '宠物');
+                if (pet.breed) html += ' · ' + escapeHtml(pet.breed);
+                html += '</p></div></div>';
+                html += '<div class="flex gap-0.5">';
+                html += '<button onclick="openEditPetModal(\'' + pet.id + '\')" class="icon-btn" aria-label="编辑">';
+                html += '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>';
+                html += '<button onclick="confirmDeletePet(\'' + pet.id + '\')" class="icon-btn danger" aria-label="删除">';
+                html += '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>';
+                html += '</div></div>';
+                
+                html += '<div class="grid grid-cols-2 gap-2 mb-4">';
+                html += '<div class="bg-[#FFF9E6] rounded-lg p-2.5">';
+                html += '<p class="text-xs text-[#9C8B74] mb-0.5">体重</p>';
+                html += '<p class="text-base font-bold text-[#5D4E37]">' + (pet.weight ? pet.weight + ' kg' : '-- kg') + '</p>';
+                html += '</div>';
+                html += '<div class="bg-[#FFF9E6] rounded-lg p-2.5">';
+                html += '<p class="text-xs text-[#9C8B74] mb-0.5">身高</p>';
+                html += '<p class="text-base font-bold text-[#5D4E37]">' + (pet.height ? pet.height + ' cm' : '-- cm') + '</p>';
+                html += '</div></div>';
+                
+                if (lastMed) {
+                    html += '<div class="bg-[#FFF3E0] rounded-lg p-2.5 mb-4">';
+                    html += '<p class="text-xs text-[#E65100] mb-0.5">最近用药</p>';
+                    html += '<p class="text-sm font-medium text-[#E65100] truncate">' + escapeHtml(lastMed.value) + '</p>';
+                    html += '<p class="text-xs text-[#FF9800]">' + formatDate(lastMed.date) + '</p>';
+                    html += '</div>';
+                }
+                
+                html += '<div class="flex gap-2">';
+                html += '<button onclick="openHealthModal(\'' + pet.id + '\')" class="btn-secondary flex-1 py-2 px-3 rounded-lg font-semibold text-sm">添加记录</button>';
+                html += '<button onclick="openDetailModal(\'' + pet.id + '\')" class="btn-primary flex-1 py-2 px-3 rounded-lg font-semibold text-sm">查看详情</button>';
+                html += '</div></article>';
+            }
+            
+            grid.innerHTML = html;
+        }
+        
+        function renderRecentRecords() {
+            var section = document.getElementById('recent-section');
+            var list = document.getElementById('records-list');
+            
+            if (healthRecords.length === 0) {
+                section.classList.add('hidden');
+                return;
+            }
+            
+            section.classList.remove('hidden');
+            var sortedRecords = healthRecords.slice().sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+            var recent = sortedRecords.slice(0, 8);
+            
+            var html = '';
+            for (var i = 0; i < recent.length; i++) {
+                var record = recent[i];
+                var pet = pets.find(function(p) { return p.id === record.petId; });
+                var colors = recordColors[record.type] || recordColors.other;
+                
+                html += '<div class="timeline-dot py-2 animate-slide-in">';
+                html += '<div class="flex items-start justify-between gap-2">';
+                html += '<div class="flex-1 min-w-0">';
+                html += '<div class="flex items-center gap-2 mb-1">';
+                html += '<span class="font-semibold text-[#5D4E37] text-sm">' + (pet ? escapeHtml(pet.name) : '未知') + '</span>';
+                html += '<span class="tag" style="background:' + colors.bg + ';color:' + colors.text + '">' + (recordTypeNames[record.type] || '记录') + '</span>';
+                html += '</div>';
+                html += '<p class="text-sm text-[#5D4E37] truncate">' + escapeHtml(record.value) + '</p>';
+                if (record.note) {
+                    html += '<p class="text-xs text-[#9C8B74] mt-1 truncate">' + escapeHtml(record.note) + '</p>';
+                }
+                html += '</div>';
+                html += '<div class="flex items-center gap-2">';
+                html += '<span class="text-xs text-[#9C8B74] whitespace-nowrap">' + formatDate(record.date) + '</span>';
+                html += '<button onclick="confirmDeleteRecord(\'' + record.id + '\')" class="icon-btn danger opacity-50 hover:opacity-100" aria-label="删除">';
+                html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
+                html += '</div></div></div>';
+            }
+            
+            list.innerHTML = html;
+        }
+        
+        // 模态框操作
+        function openAddPetModal() {
+            document.getElementById('pet-modal-title').textContent = '添加新宠物';
+            document.getElementById('pet-form').reset();
+            document.getElementById('pet-id').value = '';
+            openModal('pet-modal');
+            setTimeout(function() { document.getElementById('pet-name').focus(); }, 100);
+        }
+        
+        function openEditPetModal(id) {
+            var pet = pets.find(function(p) { return p.id === id; });
+            if (!pet) return;
+            
+            document.getElementById('pet-modal-title').textContent = '编辑宠物信息';
+            document.getElementById('pet-id').value = pet.id;
+            document.getElementById('pet-name').value = pet.name || '';
+            document.getElementById('pet-type').value = pet.type || '';
+            document.getElementById('pet-breed').value = pet.breed || '';
+            document.getElementById('pet-birth').value = pet.birthDate || '';
+            document.getElementById('pet-gender').value = pet.gender || '';
+            document.getElementById('pet-weight').value = pet.weight || '';
+            document.getElementById('pet-height').value = pet.height || '';
+            
+            openModal('pet-modal');
+        }
+        
+        function closePetModal() { closeModal('pet-modal'); }
+        
+        function openHealthModal(petId) {
+            document.getElementById('health-pet-id').value = petId;
+            document.getElementById('health-form').reset();
+            setDefaultDate();
+            openModal('health-modal');
+        }
+        
+        function closeHealthModal() { closeModal('health-modal'); }
+        
+        function openDetailModal(petId) {
+            var pet = pets.find(function(p) { return p.id === petId; });
+            if (!pet) return;
+            
+            var petRecords = healthRecords.filter(function(r) { return r.petId === petId; });
+            petRecords.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+            
+            var ageText = pet.birthDate ? calculateAge(pet.birthDate) : '';
+            
+            var html = '<div class="flex items-center gap-4 mb-5 pb-5 border-b border-[#E8DCC8]">';
+            html += '<div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FFF5D6] to-[#FFE9B3] flex items-center justify-center text-[#E8B84A]">';
+            html += petIcons[pet.type] || petIcons.other;
+            html += '</div>';
+            html += '<div class="flex-1 min-w-0">';
+            html += '<h4 class="text-xl font-bold text-[#5D4E37] font-display">' + escapeHtml(pet.name) + '</h4>';
+            html += '<p class="text-sm text-[#9C8B74]">' + petTypeNames[pet.type];
+            if (pet.breed) html += ' · ' + escapeHtml(pet.breed);
+            if (pet.gender) html += ' · ' + genderNames[pet.gender];
+            html += '</p>';
+            if (ageText) html += '<p class="text-xs text-[#9C8B74] mt-1">' + ageText + '</p>';
+            html += '</div></div>';
+            
+            html += '<div class="grid grid-cols-2 gap-3 mb-5">';
+            html += '<div class="stat-card rounded-xl p-3 text-center">';
+            html += '<p class="text-xs text-[#9C8B74] mb-0.5">体重</p>';
+            html += '<p class="text-xl font-bold text-[#5D4E37]">' + (pet.weight || '--') + ' kg</p>';
+            html += '</div>';
+            html += '<div class="stat-card rounded-xl p-3 text-center">';
+            html += '<p class="text-xs text-[#9C8B74] mb-0.5">身高</p>';
+            html += '<p class="text-xl font-bold text-[#5D4E37]">' + (pet.height || '--') + ' cm</p>';
+            html += '</div></div>';
+            
+            html += '<div class="flex items-center justify-between mb-3">';
+            html += '<h5 class="font-bold text-[#5D4E37]">健康记录</h5>';
+            html += '<span class="tag">' + petRecords.length + ' 条</span>';
+            html += '</div>';
+            
+            if (petRecords.length > 0) {
+                html += '<div class="space-y-2 max-h-56 overflow-y-auto pr-1">';
+                for (var i = 0; i < petRecords.length; i++) {
+                    var record = petRecords[i];
+                    var colors = recordColors[record.type] || recordColors.other;
+                    html += '<div class="flex items-center gap-3 p-2.5 rounded-xl record-item" style="background:' + colors.bg + '">';
+                    html += '<div class="flex-1 min-w-0">';
+                    html += '<div class="flex items-center gap-2 mb-0.5">';
+                    html += '<span class="text-xs font-semibold" style="color:' + colors.text + '">' + recordTypeNames[record.type] + '</span>';
+                    html += '<span class="text-xs text-[#9C8B74]">' + formatDate(record.date) + '</span>';
+                    html += '</div>';
+                    html += '<p class="text-sm font-medium text-[#5D4E37] truncate">' + escapeHtml(record.value) + '</p>';
+                    html += '</div>';
+                    html += '<button onclick="confirmDeleteRecord(\'' + record.id + '\')" class="icon-btn danger flex-shrink-0">';
+                    html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button>';
+                    html += '</div>';
+                }
+                html += '</div>';
+            } else {
+                html += '<div class="text-center py-8 text-[#9C8B74]">';
+                html += '<p class="text-sm">暂无健康记录</p>';
+                html += '<button onclick="closeDetailModal(); setTimeout(function() { openHealthModal(\'' + pet.id + '\'); }, 200)" class="mt-2 text-sm text-[#E8B84A] font-semibold hover:underline">添加第一条记录</button>';
+                html += '</div>';
+            }
+            
+            html += '<button onclick="openHealthModal(\'' + pet.id + '\')" class="btn-primary w-full py-2.5 rounded-xl font-bold text-sm mt-4">添加新记录</button>';
+            
+            document.getElementById('detail-content').innerHTML = html;
+            openModal('detail-modal');
+        }
+        
+        function closeDetailModal() { closeModal('detail-modal'); }
+        
+        function openModal(id) {
+            document.getElementById(id).classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        
+        // 表单处理
+        document.getElementById('pet-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            var id = document.getElementById('pet-id').value;
+            var existingPet = null;
+            if (id) {
+                existingPet = pets.find(function(p) { return p.id === id; });
+            }
+            
+            var petData = {
+                id: id || generateId(),
+                name: document.getElementById('pet-name').value.trim(),
+                type: document.getElementById('pet-type').value,
+                breed: document.getElementById('pet-breed').value.trim(),
+                birthDate: document.getElementById('pet-birth').value,
+                gender: document.getElementById('pet-gender').value,
+                weight: parseFloat(document.getElementById('pet-weight').value) || null,
+                height: parseFloat(document.getElementById('pet-height').value) || null,
+                createdAt: existingPet ? existingPet.createdAt : new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            if (id) {
+                for (var i = 0; i < pets.length; i++) {
+                    if (pets[i].id === id) {
+                        pets[i] = petData;
+                        break;
+                    }
+                }
+            } else {
+                pets.push(petData);
+            }
+            
+            saveData();
+            renderAll();
+            closePetModal();
+            showToast(id ? '宠物信息已更新' : '宠物添加成功');
+        });
+        
+        document.getElementById('health-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            var petId = document.getElementById('health-pet-id').value;
+            var type = document.getElementById('record-type').value;
+            var value = document.getElementById('record-value').value.trim();
+            
+            var recordData = {
+                id: generateId(),
+                petId: petId,
+                type: type,
+                date: document.getElementById('record-date').value,
+                value: value,
+                note: document.getElementById('record-note').value.trim(),
+                createdAt: new Date().toISOString()
+            };
+            
+            healthRecords.push(recordData);
+            
+            var pet = pets.find(function(p) { return p.id === petId; });
+            if (pet) {
+                var num = parseFloat(value);
+                if (!isNaN(num)) {
+                    if (type === 'weight') pet.weight = num;
+                    else if (type === 'height') pet.height = num;
+                }
+            }
+            
+            saveData();
+            renderAll();
+            closeHealthModal();
+            showToast('健康记录已保存');
+        });
+        
+        document.getElementById('record-type').addEventListener('change', function(e) {
+            var placeholders = {
+                weight: '例如：5.2 kg',
+                height: '例如：32 cm',
+                medication: '例如：阿莫西林 50mg',
+                vaccine: '例如：狂犬疫苗',
+                checkup: '例如：常规体检 - 正常',
+                surgery: '例如：绝育手术',
+                other: '输入记录内容'
+            };
+            document.getElementById('record-value').placeholder = placeholders[e.target.value] || '输入内容';
+        });
+        
+        // 删除操作
+        function confirmDeletePet(id) {
+            if (confirm('确定要删除这只宠物吗？相关的所有健康记录也会被删除。')) {
+                pets = pets.filter(function(p) { return p.id !== id; });
+                healthRecords = healthRecords.filter(function(r) { return r.petId !== id; });
+                saveData();
+                renderAll();
+                showToast('宠物已删除');
+            }
+        }
+        
+        function confirmDeleteRecord(id) {
+            if (confirm('确定要删除这条记录吗？')) {
+                healthRecords = healthRecords.filter(function(r) { return r.id !== id; });
+                saveData();
+                renderAll();
+                showToast('记录已删除');
+            }
+        }
+        
+        // 工具函数
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            var date = new Date(dateStr);
+            var now = new Date();
+            var diff = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+            
+            if (diff === 0) return '今天';
+            if (diff === 1) return '昨天';
+            if (diff < 7) return diff + '天前';
+            if (diff < 30) return Math.floor(diff / 7) + '周前';
+            
+            return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+        }
+        
+        function calculateAge(birthDate) {
+            var birth = new Date(birthDate);
+            var now = new Date();
+            var years = now.getFullYear() - birth.getFullYear();
+            var months = now.getMonth() - birth.getMonth();
+            
+            if (years > 0) {
+                var m = months < 0 ? 12 + months : months;
+                return years + '岁' + (m > 0 ? m + '个月' : '');
+            } else {
+                var totalMonths = years * 12 + months;
+                return Math.max(0, totalMonths) + '个月大';
+            }
+        }
+        
+        function showToast(message) {
+            var toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = message;
+            toast.classList.remove('hidden');
+            setTimeout(function() { toast.classList.add('hidden'); }, 3000);
+        }
+        
+        // 键盘支持
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closePetModal();
+                closeHealthModal();
+                closeDetailModal();
+            }
+        });
+    </script>
+</body>
+</html>
